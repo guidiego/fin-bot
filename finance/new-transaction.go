@@ -7,6 +7,7 @@ import (
 
 	"github.com/dstotijn/go-notion"
 	"github.com/google/uuid"
+	"github.com/guidiego/fin-bot/util"
 )
 
 var bankIds = map[string]string{
@@ -17,15 +18,10 @@ var bankIds = map[string]string{
 }
 
 func buildPagePayload(dbid string, value float64, uuid string, bankSlug string, desc string) (notion.CreatePageParams, error) {
-	emoji := "🟢"
-	bankId, bankIdExists := bankIds["foo"]
+	bankId, bankIdExists := bankIds[bankSlug]
 
 	if !bankIdExists {
 		return notion.CreatePageParams{}, errors.New("bank slug not supported")
-	}
-
-	if value < 0 {
-		emoji = "🔴"
 	}
 
 	title := []notion.RichText{
@@ -46,6 +42,7 @@ func buildPagePayload(dbid string, value float64, uuid string, bankSlug string, 
 		},
 	}
 
+	emoji := util.GetTransactionEmoji(value)
 	return notion.CreatePageParams{
 		ParentType: notion.ParentTypeDatabase,
 		ParentID:   dbid,

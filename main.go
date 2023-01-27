@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 
@@ -28,6 +30,10 @@ func init() {
 }
 
 func main() {
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "All Good")
+	})
+
 	guildId := os.Getenv("DISCORD_CHANNEL_ID")
 	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
 		log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
@@ -53,6 +59,13 @@ func main() {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
 	log.Println("Press Ctrl+C to exit")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+
+	}
+
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 	<-stop
 
 	for _, v := range registeredCommands {
