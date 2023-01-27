@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	InsertTransactionCMD = discordgo.ApplicationCommand{
+	insertTransactionCMD = discordgo.ApplicationCommand{
 		Name:        "t",
 		Description: "This command inserts a transaction in your Notion Page",
 		Options: []*discordgo.ApplicationCommandOption{
@@ -66,11 +66,11 @@ var (
 	}
 )
 
-func InsertTransactionHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func insertTransactionHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	options := i.ApplicationCommandData().Options
-	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
+	optionMap := make(map[string]discordgo.ApplicationCommandInteractionDataOption, len(options))
 	for _, opt := range options {
-		optionMap[opt.Name] = opt
+		optionMap[opt.Name] = *opt
 	}
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -78,7 +78,7 @@ func InsertTransactionHandler(s *discordgo.Session, i *discordgo.InteractionCrea
 		Data: &discordgo.InteractionResponseData{
 			Content: fmt.Sprintf(
 				"bank %s",
-				optionMap["account"],
+				optionMap["account"].Value,
 			),
 		},
 	})

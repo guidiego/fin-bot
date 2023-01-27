@@ -20,8 +20,9 @@ func init() {
 	}
 
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if i.ApplicationCommandData().Name == "t" {
-			commands.InsertTransactionHandler(s, i)
+		cmd := commands.Commands[i.ApplicationCommandData().Name]
+		if cmd != nil {
+			cmd.Handler(s, i)
 		}
 	})
 }
@@ -37,10 +38,14 @@ func main() {
 	}
 
 	log.Println("Adding commands...")
-	cmd, err2 := s.ApplicationCommandCreate(s.State.User.ID, guildId, &commands.InsertTransactionCMD)
+	registeredCommands := map[string]discordgo.ApplicationCommand{}
+	for _, v := range commands.Commands {
+		cmd, creationErr := s.ApplicationCommandCreate(s.State.User.ID, guildId, &v.Spec)
+		registeredCommands[v.Spec.Name] = *cmd
 
-	if err2 != nil {
-		log.Fatal(err2)
+		if creationErr != nil {
+			log.Fatal(creationErr)
+		}
 	}
 
 	defer s.Close()
@@ -50,8 +55,10 @@ func main() {
 	log.Println("Press Ctrl+C to exit")
 	<-stop
 
-	err3 := s.ApplicationCommandDelete(s.State.User.ID, "", cmd.ID)
-	if err3 != nil {
-		log.Panicf("Cannot delete '%v' command: %v", cmd.Name, err)
+	for _, v := range registeredCommands {
+		err3 := s.ApplicationCommandDelete(s.State.User.ID, "", v.ID)
+		if err3 != nil {
+			log.Panicf("Cannot delete '%v' command: %v", v.Name, err)
+		}
 	}
 }
