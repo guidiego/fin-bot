@@ -8,11 +8,11 @@ type SlashCommand struct {
 	Handler CommandHandler
 }
 
-var (
-	Commands = map[string]*SlashCommand{
-		insertTransactionCMD.Name: {
-			insertTransactionCMD,
+func Build() map[string]*SlashCommand {
+	return map[string]*SlashCommand{
+		insertTransactionCmdName: {
+			insertTransactionCommandBuild(),
 			insertTransactionHandler,
 		},
 	}
-)
+}

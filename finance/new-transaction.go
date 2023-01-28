@@ -2,28 +2,15 @@ package finance
 
 import (
 	"context"
-	"errors"
-	"os"
+	"fmt"
 
 	"github.com/dstotijn/go-notion"
 	"github.com/google/uuid"
+	"github.com/guidiego/fin-bot/config"
 	"github.com/guidiego/fin-bot/util"
 )
 
-var bankIds = map[string]string{
-	"commerz":  "688b791acb334cea8526f25ae9c116f6",
-	"amex":     "e460bf056c8546f9add452e67d2b833c",
-	"dinheiro": "bbc28caaefc8470f9d824e8139febd3d",
-	"crypto":   "181a341facaf4939bae5392de14d5f36",
-}
-
-func buildPagePayload(dbid string, value float64, uuid string, bankSlug string, desc string) (notion.CreatePageParams, error) {
-	bankId, bankIdExists := bankIds[bankSlug]
-
-	if !bankIdExists {
-		return notion.CreatePageParams{}, errors.New("bank slug not supported")
-	}
-
+func buildPagePayload(dbid string, value float64, uuid string, bankId string, desc string, budgetId string) (notion.CreatePageParams, error) {
 	title := []notion.RichText{
 		{
 			Text: &notion.Text{Content: uuid},
@@ -36,9 +23,15 @@ func buildPagePayload(dbid string, value float64, uuid string, bankSlug string, 
 		},
 	}
 
-	relation := []notion.Relation{
+	account := []notion.Relation{
 		{
 			ID: bankId,
+		},
+	}
+
+	budget := []notion.Relation{
+		{
+			ID: budgetId,
 		},
 	}
 
@@ -58,26 +51,30 @@ func buildPagePayload(dbid string, value float64, uuid string, bankSlug string, 
 				RichText: description,
 			},
 			"Conta": notion.DatabasePageProperty{
-				Relation: relation,
+				Relation: account,
 			},
 			"Valor": notion.DatabasePageProperty{
 				Number: &value,
+			},
+			"Budget": {
+				Relation: budget,
 			},
 		},
 	}, nil
 }
 
-func NewTransaction(value float64, account string, content string) error {
-	notion_db := os.Getenv("NOTION_TRANSACTION_DB_ID")
-	p, buildErr := buildPagePayload(notion_db, value, uuid.New().String(), account, content)
+func NewTransaction(value float64, account string, content string, budgetId string) error {
+	notion_db := config.Application.NotionTransactionTableId
+	p, buildErr := buildPagePayload(notion_db, value, uuid.New().String(), account, content, budgetId)
 
 	if buildErr != nil {
 		return buildErr
 	}
 
-	_, cliError := notionCli.CreatePage(context.Background(), p)
+	_, cliError := util.Notion.CreatePage(context.Background(), p)
 
 	if cliError != nil {
+		fmt.Printf("%e", cliError)
 		return cliError
 	}
 

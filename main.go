@@ -1,28 +1,40 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/guidiego/fin-bot/api"
 	"github.com/guidiego/fin-bot/commands"
+	"github.com/guidiego/fin-bot/config"
+	"github.com/guidiego/fin-bot/util"
 )
 
 var s *discordgo.Session
+var cmds map[string]*commands.SlashCommand
 
 func init() {
 	var err error
-	token := os.Getenv("DISCORD_BOT_TOKEN")
-	s, err = discordgo.New("Bot " + token)
+
+	util.InitNotion()
+	err = config.Load()
+
+	if err != nil {
+		log.Fatalf("Fail Config: %v", err)
+	}
+
+	s, err = discordgo.New("Bot " + config.Application.DiscordBotToken)
+
 	if err != nil {
 		log.Fatalf("Invalid bot parameters: %v", err)
 	}
 
+	cmds = commands.Build()
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		cmd := commands.Commands[i.ApplicationCommandData().Name]
+		cmd := cmds[i.ApplicationCommandData().Name]
 		if cmd != nil {
 			cmd.Handler(s, i)
 		}
@@ -30,11 +42,6 @@ func init() {
 }
 
 func main() {
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "All Good")
-	})
-
-	guildId := os.Getenv("DISCORD_CHANNEL_ID")
 	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
 		log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
 	})
@@ -44,9 +51,10 @@ func main() {
 	}
 
 	log.Println("Adding commands...")
+
 	registeredCommands := map[string]discordgo.ApplicationCommand{}
-	for _, v := range commands.Commands {
-		cmd, creationErr := s.ApplicationCommandCreate(s.State.User.ID, guildId, &v.Spec)
+	for _, v := range cmds {
+		cmd, creationErr := s.ApplicationCommandCreate(s.State.User.ID, "", &v.Spec)
 		registeredCommands[v.Spec.Name] = *cmd
 
 		if creationErr != nil {
@@ -54,18 +62,18 @@ func main() {
 		}
 	}
 
+	http.HandleFunc("/exec-schedule", api.ExecScheduleRoute(s))
+
+	if config.Application.ApiPort == "" {
+		config.Application.ApiPort = "8080"
+	}
+
 	defer s.Close()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
 	log.Println("Press Ctrl+C to exit")
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-
-	}
-
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	http.ListenAndServe(":"+config.Application.ApiPort, nil)
 	<-stop
 
 	for _, v := range registeredCommands {
