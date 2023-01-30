@@ -2,6 +2,7 @@ package config
 
 type Config struct {
 	ApiPort                  string
+	ApiToken                 string
 	BankSlugToId             map[string]string
 	BankIdToSlug             map[string]string
 	Budgets                  map[string]string

@@ -29,13 +29,31 @@ func buildPagePayload(dbid string, value float64, uuid string, bankId string, de
 		},
 	}
 
-	budget := []notion.Relation{
-		{
-			ID: budgetId,
+	emoji := util.GetTransactionEmoji(value)
+	database_properties := notion.DatabasePageProperties{
+		"Ref": notion.DatabasePageProperty{
+			Title: title,
+		},
+		"Desc": notion.DatabasePageProperty{
+			RichText: description,
+		},
+		"Conta": notion.DatabasePageProperty{
+			Relation: account,
+		},
+		"Valor": notion.DatabasePageProperty{
+			Number: &value,
 		},
 	}
 
-	emoji := util.GetTransactionEmoji(value)
+	if budgetId != "" {
+		database_properties["Budget"] = notion.DatabasePageProperty{
+			Relation: []notion.Relation{
+				{
+					ID: budgetId,
+				},
+			},
+		}
+	}
 	return notion.CreatePageParams{
 		ParentType: notion.ParentTypeDatabase,
 		ParentID:   dbid,
@@ -43,23 +61,7 @@ func buildPagePayload(dbid string, value float64, uuid string, bankId string, de
 			Type:  "emoji",
 			Emoji: &emoji,
 		},
-		DatabasePageProperties: &notion.DatabasePageProperties{
-			"Ref": notion.DatabasePageProperty{
-				Title: title,
-			},
-			"Desc": notion.DatabasePageProperty{
-				RichText: description,
-			},
-			"Conta": notion.DatabasePageProperty{
-				Relation: account,
-			},
-			"Valor": notion.DatabasePageProperty{
-				Number: &value,
-			},
-			"Budget": {
-				Relation: budget,
-			},
-		},
+		DatabasePageProperties: &database_properties,
 	}, nil
 }
 

@@ -70,6 +70,7 @@ func Load() error {
 	Application.Budgets = budgets
 
 	Application.ApiPort = os.Getenv("PORT")
+	Application.ApiToken = os.Getenv("API_TOKEN")
 	Application.DiscordBotToken = os.Getenv("DISCORD_BOT_TOKEN")
 
 	return nil
