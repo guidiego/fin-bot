@@ -63,6 +63,7 @@ func main() {
 	}
 
 	http.HandleFunc("/exec-schedule", api.ExecScheduleRoute(s))
+	http.HandleFunc("/inform-balance", api.InformBalanceRoute(s))
 
 	if config.Application.ApiPort == "" {
 		config.Application.ApiPort = "8080"
