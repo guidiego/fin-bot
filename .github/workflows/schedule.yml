@@ -8,4 +8,4 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: "cUrl"
-        run: 'curl -XGET -H "Authorization: $API_TOKEN" "$API_URL/exec-schedule"'
+        run: 'curl -XGET -H "Authorization: ${{ secrets.API_TOKEN }}" "${{ secrets.API_URL }}/exec-schedule"'
