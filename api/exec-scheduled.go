@@ -32,15 +32,15 @@ func ExecScheduleRoute(s *discordgo.Session) http.HandlerFunc {
 		for _, r := range results {
 			props := r.Properties.(notion.DatabasePageProperties)
 
-			dia := *props["Dia"].Number
+			dia := *props["Day"].Number
 
 			if float64(today.Day()) != dia {
 				continue
 			}
 
-			value := *props["Valor"].Number
+			value := *props["Value"].Number
 			ref := props["Ref"].Title[0].Text.Content
-			automatic := *props["Debitar Automatico"].Checkbox
+			automatic := *props["AutoDebit"].Checkbox
 
 			rawMsg := ""
 			msg := ""
@@ -50,7 +50,7 @@ func ExecScheduleRoute(s *discordgo.Session) http.HandlerFunc {
 				rawMsg = "%s **[%s] %.2f€** precisa ser feito hoje! CC: %s"
 				msg = fmt.Sprintf(rawMsg, util.GetTransactionEmoji(value), ref, value, usersToAlert)
 			} else {
-				bankId := props["Conta"].Relation[0].ID
+				bankId := props["Account"].Relation[0].ID
 				budgetRel, isBudgetOk := props["Budget"]
 				budget := ""
 

@@ -37,10 +37,10 @@ func buildPagePayload(dbid string, value float64, uuid string, bankId string, de
 		"Desc": notion.DatabasePageProperty{
 			RichText: description,
 		},
-		"Conta": notion.DatabasePageProperty{
+		"Account": notion.DatabasePageProperty{
 			Relation: account,
 		},
-		"Valor": notion.DatabasePageProperty{
+		"Value": notion.DatabasePageProperty{
 			Number: &value,
 		},
 	}
