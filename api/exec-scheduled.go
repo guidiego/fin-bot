@@ -20,10 +20,11 @@ func ExecScheduleRoute(s *discordgo.Session) http.HandlerFunc {
 		}
 
 		results, err := finance.GetScheduledTransactions()
-		today := time.Now()
 		usersToAlert := config.Application.UsersToRemember
 		trackChannelId := config.Application.DiscordTrackChannelId
 		rememberChannelId := config.Application.DiscordRememberChannelId
+		now := time.Now()
+		today := float64(now.Day())
 
 		if err != nil {
 			log.Printf("%e", err)
@@ -31,10 +32,9 @@ func ExecScheduleRoute(s *discordgo.Session) http.HandlerFunc {
 
 		for _, r := range results {
 			props := r.Properties.(notion.DatabasePageProperties)
+			day := *props["Day"].Number
 
-			dia := *props["Day"].Number
-
-			if float64(today.Day()) != dia {
+			if today != day {
 				continue
 			}
 
@@ -51,11 +51,11 @@ func ExecScheduleRoute(s *discordgo.Session) http.HandlerFunc {
 				msg = fmt.Sprintf(rawMsg, util.GetTransactionEmoji(value), ref, value, usersToAlert)
 			} else {
 				bankId := props["Account"].Relation[0].ID
-				budgetRel, isBudgetOk := props["Budget"]
+				budgetRel := props["Budget"].Relation
 				budget := ""
 
-				if isBudgetOk {
-					budget = budgetRel.Relation[0].ID
+				if len(budgetRel) > 0 {
+					budget = budgetRel[0].ID
 				}
 
 				err := finance.NewTransaction(value, bankId, ref, budget)
