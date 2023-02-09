@@ -32,35 +32,35 @@ func init() {
 		log.Fatalf("Invalid bot parameters: %v", err)
 	}
 
-	cmds = commands.Build()
-	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		cmd := cmds[i.ApplicationCommandData().Name]
-		if cmd != nil {
-			cmd.Handler(s, i)
-		}
-	})
+	// cmds = commands.Build()
+	// s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	// 	cmd := cmds[i.ApplicationCommandData().Name]
+	// 	if cmd != nil {
+	// 		cmd.Handler(s, i)
+	// 	}
+	// })
 }
 
 func main() {
-	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
-		log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
-	})
+	// s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
+	// 	log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
+	// })
 	err := s.Open()
 	if err != nil {
 		log.Fatalf("Cannot open the session: %v", err)
 	}
 
-	log.Println("Adding commands...")
+	// log.Println("Adding commands...")
 
-	registeredCommands := map[string]discordgo.ApplicationCommand{}
-	for _, v := range cmds {
-		cmd, creationErr := s.ApplicationCommandCreate(s.State.User.ID, "", &v.Spec)
-		registeredCommands[v.Spec.Name] = *cmd
+	// registeredCommands := map[string]discordgo.ApplicationCommand{}
+	// for _, v := range cmds {
+	// 	cmd, creationErr := s.ApplicationCommandCreate(s.State.User.ID, "", &v.Spec)
+	// 	registeredCommands[v.Spec.Name] = *cmd
 
-		if creationErr != nil {
-			log.Fatal(creationErr)
-		}
-	}
+	// 	if creationErr != nil {
+	// 		log.Fatal(creationErr)
+	// 	}
+	// }
 
 	http.HandleFunc("/exec-schedule", api.ExecScheduleRoute(s))
 	http.HandleFunc("/inform-balance", api.InformBalanceRoute(s))
@@ -77,10 +77,10 @@ func main() {
 	http.ListenAndServe(":"+config.Application.ApiPort, nil)
 	<-stop
 
-	for _, v := range registeredCommands {
-		err3 := s.ApplicationCommandDelete(s.State.User.ID, "", v.ID)
-		if err3 != nil {
-			log.Panicf("Cannot delete '%v' command: %v", v.Name, err)
-		}
-	}
+	// for _, v := range registeredCommands {
+	// 	err3 := s.ApplicationCommandDelete(s.State.User.ID, "", v.ID)
+	// 	if err3 != nil {
+	// 		log.Panicf("Cannot delete '%v' command: %v", v.Name, err)
+	// 	}
+	// }
 }

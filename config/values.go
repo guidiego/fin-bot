@@ -11,6 +11,7 @@ type Config struct {
 	NotionTransactionTableId string `json:"NotionTransactionTableId"`
 	NotionAccountTableId     string `json:"NotionAccountTableId"`
 	NotionBudgetTableId      string `json:"NotionBudgetTableId"`
+	NotionGoalTableId        string `json:"NotionGoalTableId"`
 	DiscordBotToken          string
 	DiscordTrackChannelId    string `json:"DiscordTrackChannelId"`
 	DiscordRememberChannelId string `json:"DiscordRememberChannelId"`

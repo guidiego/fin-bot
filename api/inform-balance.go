@@ -10,7 +10,7 @@ import (
 	"github.com/guidiego/fin-bot/finance"
 )
 
-func getAccountMessage() (string, error) {
+func getAccountMessage(allocated float64) (string, error) {
 	msg := "**🏦 Accounts**\n\n"
 	accounts, err := finance.GetAccountValues()
 
@@ -24,7 +24,9 @@ func getAccountMessage() (string, error) {
 		msg = msg + fmt.Sprintf(">  **%s:**    %.2f€\n", v.Name, v.Value)
 	}
 
-	msg = msg + fmt.Sprintf(">  **TOTAL:    %.2f**€\n\n\n\n", total)
+	msg += "> ---------------\n"
+	msg = msg + fmt.Sprintf(">  **TOTAL:    %.2f**€\n", total)
+	msg = msg + fmt.Sprintf(">  **FREE:    %.2f**€\n\n\n\n", total-allocated)
 	return msg, nil
 }
 
@@ -59,6 +61,38 @@ func getBudgetsMessage() (string, error) {
 	return msg, nil
 }
 
+func getEmojiByPercent(value float64) string {
+	if value == 100 {
+		return "🔵"
+	} else if value > 75 {
+		return "🟢"
+	} else if value > 50 {
+		return "🟡"
+	} else if value > 25 {
+		return "🟠"
+	} else {
+		return "🔴"
+	}
+}
+
+func getGoalsMessage() (string, float64, error) {
+	msg := "**🏅 Goals**\n\n"
+	goals, err := finance.GetGoals()
+
+	if err != nil {
+		return "", 0, err
+	}
+
+	totalAllocated := 0.0
+	for _, v := range goals {
+		per := (v.AlreadyIn / v.Desired) * 100
+		totalAllocated += v.AlreadyIn
+		msg = msg + fmt.Sprintf(">  **%s    %.2f%s **    %s     _(%.2f€/%.2f€)_\n> \n", getEmojiByPercent(per), per, "%", v.Name, v.AlreadyIn, v.Desired)
+	}
+
+	return msg + "\n\n", totalAllocated, nil
+}
+
 func InformBalanceRoute(s *discordgo.Session) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !IsTokenOk(w, r) {
@@ -68,7 +102,15 @@ func InformBalanceRoute(s *discordgo.Session) http.HandlerFunc {
 		date := time.Now()
 		msg := "🤑  **IT'S TIME TO YOUR BALANCE!** 🤑\n"
 		msg = msg + fmt.Sprintf("📅  _%s_\n\n\n", date.Format("02/01/2006"))
-		aMsg, aErr := getAccountMessage()
+
+		gMsg, gAllocated, gErr := getGoalsMessage()
+
+		if gErr != nil {
+			fmt.Fprintf(w, "%e", gErr)
+			return
+		}
+
+		aMsg, aErr := getAccountMessage(gAllocated)
 
 		if aErr != nil {
 			fmt.Fprintf(w, "%e", aErr)
@@ -82,7 +124,7 @@ func InformBalanceRoute(s *discordgo.Session) http.HandlerFunc {
 			return
 		}
 
-		msg = msg + aMsg + bMsg + fmt.Sprintf("\n\n CC: %s\n", config.Application.UsersToRemember)
+		msg = msg + aMsg + gMsg + bMsg + fmt.Sprintf("\n\n CC: %s\n", config.Application.UsersToRemember)
 
 		s.ChannelMessageSend(config.Application.DiscordBalanceChannnelId, msg)
 

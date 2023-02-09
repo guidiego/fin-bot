@@ -3,6 +3,7 @@ package finance
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/dstotijn/go-notion"
 	"github.com/google/uuid"
@@ -67,7 +68,10 @@ func buildPagePayload(dbid string, value float64, uuid string, bankId string, de
 
 func NewTransaction(value float64, account string, content string, budgetId string) error {
 	notion_db := config.Application.NotionTransactionTableId
-	p, buildErr := buildPagePayload(notion_db, value, uuid.New().String(), account, content, budgetId)
+	t := time.Now()
+	token := t.Format("2006-01")
+	id := token + "-" + uuid.New().String()
+	p, buildErr := buildPagePayload(notion_db, value, id, account, content, budgetId)
 
 	if buildErr != nil {
 		return buildErr

@@ -2,6 +2,7 @@ package finance
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/dstotijn/go-notion"
 	"github.com/guidiego/fin-bot/config"
@@ -24,9 +25,19 @@ func GetAccountValues() ([]AccountValues, error) {
 	aggVal := make([]AccountValues, len(dbItems.Results))
 	for i, r := range dbItems.Results {
 		props := r.Properties.(notion.DatabasePageProperties)
+		prop := props["Total"]
+		total := *prop.Rollup.Number
+		field, err := util.Notion.FindPagePropertyByID(context.Background(), r.ID, prop.ID, nil)
+
+		if err == nil {
+			total = *field.PropertyItem.Rollup.Number
+		} else {
+			fmt.Printf("%e\n", err)
+		}
+
 		aggVal[i] = AccountValues{
 			props["Name"].Title[0].PlainText,
-			*props["Total"].Rollup.Number,
+			total,
 		}
 	}
 
